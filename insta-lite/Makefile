@@ -55,6 +55,6 @@ test:
 	go test ./...
 
 test-integration:
-	TEST_DATABASE_URL=postgres://postgres:64062639@localhost:5433/insta \
+	TEST_DATABASE_URL=postgres://postgres:${DB_PASSWORD}@localhost:5433/insta \
 	TEST_REDIS_ADDR=localhost:6379 \
 	go test -tags integration -count=1 ./...

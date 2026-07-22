@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-64062639}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: insta
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgres://postgres:${DB_PASSWORD:-64062639}@postgres:5432/insta
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/insta
       REDIS_ADDR: redis:6379
     ports:
       - "${PORT:-8080}:8080"
