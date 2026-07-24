@@ -1,7 +1,0 @@
-.git
-.env
-bin/
-*.md
-*.png
-*.excalidraw
-infos.txt
