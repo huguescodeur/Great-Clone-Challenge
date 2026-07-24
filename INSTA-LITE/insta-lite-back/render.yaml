@@ -34,6 +34,10 @@ services:
       - key: CLOUDINARY_FOLDER
         value: insta-lite
 
+      # Your Vercel frontend URL — set in the Render dashboard, not committed to git
+      - key: ALLOWED_ORIGIN
+        sync: false
+
   - type: redis
     name: insta-lite-redis
     plan: free

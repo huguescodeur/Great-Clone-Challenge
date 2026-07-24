@@ -20,8 +20,16 @@ func (a *App) Routes() chi.Router {
 	r.Use(middlewares.Logger)
 	r.Use(middleware.Recoverer)
 
+	allowedOrigins := []string{
+		"http://localhost:5173", "http://127.0.0.1:5173",
+		"http://localhost:5174", "http://127.0.0.1:5174",
+	}
+	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
+		allowedOrigins = append(allowedOrigins, origin)
+	}
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"},
+		AllowedOrigins: allowedOrigins,
 
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 
