@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: insta-lite-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      # Set this to your Supabase session-pooler URL (port 5432, NOT 6543)
+      # Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+      - key: DATABASE_URL
+        sync: false
+
+      # Populated automatically from the Redis service below
+      - key: REDIS_ADDR
+        fromService:
+          type: redis
+          name: insta-lite-redis
+          property: connectionString
+
+      - key: PORT
+        value: 8080
+
+      # Render can auto-generate this — click "Generate" in the dashboard
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Cloudinary — copy from your Cloudinary dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: insta-lite
+
+  - type: redis
+    name: insta-lite-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

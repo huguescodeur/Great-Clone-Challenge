@@ -1,6 +1,7 @@
 package app
 
 import (
+	"net/http"
 	"os"
 	"time"
 
@@ -29,6 +30,10 @@ func (a *App) Routes() chi.Router {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
