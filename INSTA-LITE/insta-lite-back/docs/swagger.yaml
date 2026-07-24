@@ -50,6 +50,8 @@ definitions:
         type: string
       userId:
         type: string
+      username:
+        type: string
     type: object
   comment.CommentCreateRequest:
     properties:
@@ -153,6 +155,8 @@ definitions:
     properties:
       actorId:
         type: string
+      actorUsername:
+        type: string
       createdAt:
         type: string
       entityId:
@@ -218,6 +222,8 @@ definitions:
         type: string
       userID:
         type: string
+      username:
+        type: string
     type: object
   post.PostCreateRequest:
     properties:
@@ -258,6 +264,8 @@ definitions:
         type: string
       userID:
         type: string
+      username:
+        type: string
     type: object
   post.PostUpdateRequest:
     properties:
@@ -287,6 +295,29 @@ definitions:
     required:
     - type
     - url
+    type: object
+  user.User:
+    properties:
+      bio:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      followersCount:
+        type: integer
+      followingCount:
+        type: integer
+      fullName:
+        type: string
+      postsCount:
+        type: integer
+      profilePicURL:
+        type: string
+      userID:
+        type: string
+      username:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -1145,6 +1176,38 @@ paths:
       summary: Mon like sur un post
       tags:
       - Post Likes
+  /users/{userID}:
+    get:
+      description: Returns the public profile of a user by ID, including live followers,
+        following, and posts counts.
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: userID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Invalid user ID
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
   /users/{userID}/follow:
     delete:
       description: L'utilisateur connecté arrête de suivre un autre utilisateur

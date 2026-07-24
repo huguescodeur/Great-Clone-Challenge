@@ -1332,6 +1332,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{userID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the public profile of a user by ID, including live followers, following, and posts counts.",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{userID}/follow": {
             "post": {
                 "security": [
@@ -1670,6 +1719,9 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -1826,6 +1878,9 @@ const docTemplate = `{
                 "actorId": {
                     "type": "string"
                 },
+                "actorUsername": {
+                    "type": "string"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -1921,6 +1976,9 @@ const docTemplate = `{
                 },
                 "userID": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -1982,6 +2040,9 @@ const docTemplate = `{
                 },
                 "userID": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -2024,6 +2085,41 @@ const docTemplate = `{
                     ]
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.User": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "followersCount": {
+                    "type": "integer"
+                },
+                "followingCount": {
+                    "type": "integer"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "postsCount": {
+                    "type": "integer"
+                },
+                "profilePicURL": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

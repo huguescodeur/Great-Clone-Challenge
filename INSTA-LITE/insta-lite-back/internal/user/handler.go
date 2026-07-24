@@ -18,6 +18,18 @@ func NewUserHandler(store UserStore) *UserHandler {
 	return &UserHandler{store: store}
 }
 
+// GetByIDHandler returns a user's public profile including live follower, following, and post counts.
+//
+// @Summary      Get user profile
+// @Description  Returns the public profile of a user by ID, including live followers, following, and posts counts.
+// @Tags         Users
+// @Security     BearerAuth
+// @Param        userID  path      string  true  "User ID (UUID)"
+// @Success      200     {object}  user.User
+// @Failure      400     {string}  string  "Invalid user ID"
+// @Failure      404     {string}  string  "User not found"
+// @Failure      500     {string}  string  "Internal server error"
+// @Router       /users/{userID} [get]
 func (h *UserHandler) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(chi.URLParam(r, "userID"))
 	if err != nil {

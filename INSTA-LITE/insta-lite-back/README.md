@@ -1,61 +1,88 @@
-# insta-lite
+# insta-lite — backend
 
-REST API for an Instagram-like social platform. Built with Go, Chi, PostgreSQL, and Redis.
+REST API for an Instagram-like social platform. Built with Go, Chi, PostgreSQL, Redis, and Cloudinary.
 
 ## Features
 
 - JWT authentication (register / login / logout with token blacklist)
-- Posts with media attachments and cursor-based pagination
-- Reactions on posts and comments
+- Posts with media attachments (Cloudinary) and cursor-based pagination
+- Reactions on posts and comments (like / love / laugh)
 - Nested comments with replies and cursor-based pagination
-- Follow / unfollow system
+- Follow / unfollow system with follower and following counts
+- User profile endpoint returning live counts
 - Personalised feed with hybrid push/pull fanout (Redis sorted sets)
-- In-memory live counters for likes and comments (Redis INCR/DECR)
-- Notifications (like, comment, follow, comment like) via async event workers
+- Live counters for likes and comments via Redis INCR/DECR
+- Notifications (post like, comment, comment like, follow) via async event workers
 - Rate limiting per IP stored in Redis
-- Graceful shutdown with WaitGroup across all event workers
+- Graceful shutdown draining all event workers before exit
 - Database migrations with a built-in Go runner
+- Swagger UI at `/swagger/index.html`
 
 ## Tech stack
 
 | Layer | Choice |
 |---|---|
-| Language | Go 1.26 |
+| Language | Go 1.23+ |
 | Router | go-chi/chi v5 |
-| Database | PostgreSQL 18 (pgx v5 driver) |
+| Database | PostgreSQL 18 |
 | Cache / counters | Redis 7 |
 | Auth | golang-jwt/jwt v5 + bcrypt |
-| Validation | go-playground/validator v10 |
+| Media storage | Cloudinary (signed upload URLs) |
 | Docs | Swagger (swaggo/swag) |
 | Containerisation | Docker + docker-compose |
 
 ## Prerequisites
 
 - Docker and docker-compose (recommended)
-- Go 1.26+ (only needed for local dev outside Docker)
+- Go 1.23+ (only needed for local dev outside Docker)
+- A free [Cloudinary](https://cloudinary.com) account for media uploads
 
 ## Getting started
 
 ### With Docker (recommended)
 
 ```bash
-cp .env.example .env          # fill in DB_PASSWORD and JWT_SECRET
-make up                        # starts postgres, redis, api
-make migrate-docker-stamp      # baseline the DB if it already has the schema
-# OR on a fresh DB:
-make migrate-docker            # applies all migrations
+cp .env.example .env   # fill in the required variables (see below)
+make up                # starts postgres, redis, api
+make migrate-docker    # apply all migrations on a fresh DB
 ```
 
-The API is available at `http://localhost:8080/api/v1`.
+The API is available at `http://localhost:8080/api/v1`.  
+Swagger UI: `http://localhost:8080/swagger/index.html`
 
 ### Local dev (without Docker)
 
 ```bash
-cp .env.example .env           # set DATABASE_URL and REDIS_ADDR
-make run-db                    # start postgres and redis via Docker
-make migrate                   # apply migrations against local DB
-make run-api                   # start the Go server
+cp .env.example .env   # set DATABASE_URL, REDIS_ADDR, and Cloudinary vars
+make run-db            # start postgres and redis via Docker
+make migrate           # apply migrations against the local DB
+make run-api           # start the Go server (loads .env automatically)
 ```
+
+## Environment variables
+
+Copy `.env.example` to `.env` and fill in the values before starting.
+
+### Required
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL DSN — e.g. `postgres://postgres:password@localhost:5432/insta` |
+| `JWT_SECRET` | Secret used to sign and verify JWT tokens. Use a long random string. |
+| `DB_PASSWORD` | Password used by docker-compose to create the postgres container |
+| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Your Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Your Cloudinary API secret (never exposed to the client) |
+
+### Optional
+
+| Variable | Default | Description |
+|---|---|---|
+| `REDIS_ADDR` | `localhost:6379` | Redis address (`host:port`) |
+| `PORT` | `8080` | HTTP port the server listens on |
+| `CLOUDINARY_FOLDER` | `insta-lite` | Folder inside your Cloudinary account where media is stored |
+
+> **Note**: in Docker mode `DATABASE_URL` and `REDIS_ADDR` are automatically overridden by docker-compose to point at the internal service hostnames. You only need to set `DB_PASSWORD` (and the Cloudinary + JWT vars) in your `.env` file.
 
 ## Makefile targets
 
@@ -70,35 +97,23 @@ make run-api                   # start the Go server
 | `make build` | Build binary to `bin/server` |
 | `make migrate` | Apply pending migrations (local DB) |
 | `make migrate-docker` | Apply pending migrations (Docker DB on port 5433) |
-| `make migrate-stamp` | Baseline existing local DB |
+| `make migrate-stamp` | Baseline existing local DB without re-running SQL |
 | `make migrate-docker-stamp` | Baseline existing Docker DB |
 | `make migrate-status` | Show applied / pending migrations |
-| `make swag` | Regenerate Swagger docs |
+| `make swag` | Regenerate Swagger docs from handler annotations |
+| `make test` | Run unit tests |
+| `make test-integration` | Run integration tests (requires running DB and Redis) |
 | `make clean` | Remove containers, volumes, and `bin/` |
-
-## Environment variables
-
-| Variable | Description | Default |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL DSN | required |
-| `REDIS_ADDR` | Redis address (`host:port`) | `localhost:6379` |
-| `PORT` | HTTP port | `8080` |
-| `JWT_SECRET` | JWT signing secret | required |
-| `DB_PASSWORD` | Used by docker-compose for postgres | required |
 
 ## Database migrations
 
-Migrations live in `db/migrations/` as numbered SQL files. The runner is at `cmd/migrate/main.go`.
+Migrations live in `db/migrations/` as numbered SQL files. Applied versions are tracked in `public.schema_migrations`.
 
 ```
 db/migrations/
   000001_init_schema.sql       — extensions, types, tables, indexes, triggers
   000002_add_notifications.sql — notification_type enum, notifications table
 ```
-
-Applied versions are tracked in `public.schema_migrations`.
-
-### Commands
 
 ```bash
 make migrate          # apply pending migrations
@@ -127,12 +142,12 @@ cmd/
   server/          Entry point (HTTP server, graceful shutdown)
   migrate/         Standalone migration runner
 db/
-  schema.sql       Full schema snapshot (source of truth for reference)
+  schema.sql       Full schema snapshot (reference)
   migrations/      Versioned SQL migration files
 internal/
   app/             Dependency wiring and route registration
   auth/            Register, login, JWT middleware, Redis token blacklist
-  user/            User model and store
+  user/            User model, store, and GET /users/{userID} handler
   post/            Post CRUD and cursor pagination
   postmedia/       Media attachments
   like/            Reactions on posts (with Redis live counter)
@@ -142,64 +157,123 @@ internal/
   feed/            Personalised feed — fanout service, Redis cache, hybrid push/pull
   notification/    Notification model, store, service, handler
   events/          Typed async event buses and generic worker pool
+  upload/          Cloudinary signed-URL generation
   middlewares/     Request logger, configurable Redis rate limiter
   pkg/             Shared utilities (errors, context keys, response helpers)
 docs/              Generated Swagger files
 ```
 
-## Feed architecture
-
-The feed uses a **hybrid fanout** strategy:
-
-- **Push (write fanout)**: when a regular user posts, the post ID is pushed into each follower's sorted set `feed:{followerID}` in Redis (score = UnixNano).
-- **Pull (read fanout)**: when a user with more than `pushThreshold` followers posts, the post ID is written once into `celebrity_feed:{authorID}`. On read, the service merges the user's regular feed with the celebrity feeds of followed accounts.
-- **DB fallback**: if Redis is down or the cache is cold, the service falls back to a direct DB query and warms the cache asynchronously in a goroutine.
-
-## Live counters
-
-`likes_count`, `comments_count`, and `comment_likes_count` are maintained in Redis using `INCR` / `DECR` and read back with `MGET` in batch. The values shown in `GET /posts` and `GET /feed` always reflect Redis, not the potentially stale DB column. PostgreSQL triggers keep the DB columns consistent for hard-delete operations.
-
-## Notifications
-
-Notifications are published asynchronously via in-process typed event buses (`events.TypedBus[T]`). Each action (post like, comment, comment like, follow) publishes an event; dedicated worker goroutines consume the bus and insert rows into `public.notifications`. Workers participate in the WaitGroup so graceful shutdown drains the queue before exit. Self-notifications are suppressed at the service layer before the event is even published.
-
 ## Endpoints
+
+All protected routes require `Authorization: Bearer <token>`.
+
+### Auth
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/auth/register` | No | Create account |
 | POST | `/auth/login` | No | Login, returns JWT |
-| GET | `/feed` | Yes | Personalised paginated feed |
-| GET | `/posts` | Yes | All posts (paginated) |
+| POST | `/auth/logout` | Yes | Invalidate token (Redis blacklist) |
+
+### Users
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/users/{userID}` | Yes | Get user profile with live counts |
+
+### Posts
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/posts` | Yes | All posts (cursor paginated) |
 | GET | `/posts/{id}` | Yes | Posts by user ID |
 | POST | `/posts` | Yes | Create a post |
 | PATCH | `/posts/{id}` | Yes | Update a post |
 | DELETE | `/posts/{id}` | Yes | Delete a post |
-| GET | `/posts/{postID}/likes` | Yes | Likes on a post |
+
+### Reactions (posts)
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/posts/{postID}/likes` | Yes | All reactions on a post |
 | GET | `/posts/{postID}/likes/me` | Yes | My reaction on a post |
-| POST | `/posts/{postID}/likes` | Yes | React to a post |
-| PATCH | `/posts/{postID}/likes` | Yes | Update reaction |
+| POST | `/posts/{postID}/likes` | Yes | Add a reaction |
+| PATCH | `/posts/{postID}/likes` | Yes | Change reaction |
 | DELETE | `/posts/{postID}/likes` | Yes | Remove reaction |
-| GET | `/posts/{postID}/comments` | Yes | Comments on a post |
+
+### Comments
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/posts/{postID}/comments` | Yes | Comments on a post (cursor paginated) |
 | POST | `/posts/{postID}/comments` | Yes | Add a comment or reply |
 | GET | `/comments/{id}/replies` | Yes | Replies to a comment |
 | PATCH | `/comments/{id}` | Yes | Update a comment |
 | DELETE | `/comments/{id}` | Yes | Soft-delete a comment |
-| GET | `/comments/{commentID}/likes` | Yes | Likes on a comment |
+
+### Reactions (comments)
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/comments/{commentID}/likes` | Yes | All reactions on a comment |
 | GET | `/comments/{commentID}/likes/me` | Yes | My reaction on a comment |
-| POST | `/comments/{commentID}/likes` | Yes | React to a comment |
-| PATCH | `/comments/{commentID}/likes` | Yes | Update reaction |
+| POST | `/comments/{commentID}/likes` | Yes | Add a reaction |
+| PATCH | `/comments/{commentID}/likes` | Yes | Change reaction |
 | DELETE | `/comments/{commentID}/likes` | Yes | Remove reaction |
+
+### Follow
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
 | POST | `/users/{userID}/follow` | Yes | Follow a user |
 | DELETE | `/users/{userID}/follow` | Yes | Unfollow a user |
 | GET | `/users/{userID}/follow/status` | Yes | Check follow status |
 | GET | `/users/{userID}/followers` | Yes | List followers |
 | GET | `/users/{userID}/following` | Yes | List following |
-| GET | `/notifications` | Yes | List notifications (paginated) |
-| PATCH | `/notifications/{id}/read` | Yes | Mark notification as read |
 
-Protected routes require `Authorization: Bearer <token>`.
+### Feed
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/feed` | Yes | Personalised paginated feed |
+
+### Notifications
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/notifications` | Yes | List notifications (cursor paginated, includes unread count) |
+| PATCH | `/notifications/{id}/read` | Yes | Mark a notification as read |
+
+### Upload
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/upload/signed-url` | Yes | Get a Cloudinary signed upload URL |
+
+## Architecture highlights
+
+### Feed — hybrid push/pull fanout
+
+- **Push**: regular user posts → post ID pushed into each follower's Redis sorted set `feed:{followerID}`
+- **Pull**: high-follower accounts (> 1000) → post ID written to `celebrity_feed:{authorID}`, merged at read time
+- **DB fallback**: if Redis is cold, falls back to a direct DB query and warms the cache asynchronously
+
+### Live counters
+
+`likes_count`, `comments_count`, and `comment_likes_count` are maintained in Redis (`INCR`/`DECR`). Reads use a single `MGET` batch per page. If Redis is down, the DB column value is used as fallback.
+
+### Notifications
+
+Published asynchronously via in-process typed event buses (`events.TypedBus[T]`). A worker goroutine per event type inserts the notification row. Self-notifications are suppressed before the event is published.
+
+### Auth
+
+On logout the token's `jti` is stored in Redis with a TTL equal to the token's remaining lifetime. Every protected request checks the blacklist before trusting the token.
+
+### Redis resilience
+
+All Redis calls outside the write path are fail-open: feed falls back to DB, counters fall back to DB columns, rate limiter passes requests through, blacklist check passes requests through.
 
 ## Known limitations
 
-The event buses (`events.TypedBus[T]`) are **in-process buffered channels**. Events that are in the buffer at crash time are lost — there is no replay or persistence guarantee. Migrating to Redis Streams or a message broker (NATS, Kafka) would make the pipeline durable but adds operational overhead that is out of scope for this project.
+The event buses (`events.TypedBus[T]`) are in-process buffered channels. Events in the buffer at crash time are lost — there is no replay or persistence guarantee. A production system would use Redis Streams or a message broker.
