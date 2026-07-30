@@ -33,6 +33,9 @@ func (s *stubUserStore) UpdateFollowersCount(_ context.Context, _ *sql.Tx, _ uui
 func (s *stubUserStore) UpdateFollowingCount(_ context.Context, _ *sql.Tx, _ uuid.UUID, _ int) (int64, error) {
 	return 0, nil
 }
+func (s *stubUserStore) GetByUsername(_ context.Context, _ string) (*user.User, error) {
+	return nil, nil
+}
 func (s *stubUserStore) GetFollowersCounts(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
 	if s.getFollowersCountsFn != nil {
 		return s.getFollowersCountsFn(ctx, userIDs)

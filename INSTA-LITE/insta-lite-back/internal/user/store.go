@@ -12,6 +12,7 @@ type UserStore interface {
 	UpdateFollowersCount(ctx context.Context, tx *sql.Tx, userID uuid.UUID, delta int) (int64, error)
 	UpdateFollowingCount(ctx context.Context, tx *sql.Tx, userID uuid.UUID, delta int) (int64, error)
 	GetByID(ctx context.Context, userID uuid.UUID) (*User, error)
+	GetByUsername(ctx context.Context, username string) (*User, error)
 	GetFollowersCounts(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]int64, error)
 }
 
@@ -84,6 +85,23 @@ func (s *store) GetByID(ctx context.Context, userID uuid.UUID) (*User, error) {
 
 	u := User{}
 	if err := s.db.QueryRowContext(ctx, q, userID).Scan(
+		&u.UserID, &u.Username, &u.Email, &u.FullName, &u.Bio, &u.ProfilePicURL,
+		&u.FollowersCount, &u.FollowingCount, &u.PostsCount, &u.CreatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (s *store) GetByUsername(ctx context.Context, username string) (*User, error) {
+	q := `
+		SELECT user_id, username, email, full_name, bio, profile_pic_url,
+		       followers_count, following_count, posts_count, created_at
+		FROM users
+		WHERE username = $1
+		`
+	u := User{}
+	if err := s.db.QueryRowContext(ctx, q, username).Scan(
 		&u.UserID, &u.Username, &u.Email, &u.FullName, &u.Bio, &u.ProfilePicURL,
 		&u.FollowersCount, &u.FollowingCount, &u.PostsCount, &u.CreatedAt,
 	); err != nil {

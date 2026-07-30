@@ -3,9 +3,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createFollow, deleteFollow, getFollowStatus } from '../api/follow';
 import { useAuthStore } from '../store/auth';
 
-interface Props { targetUserID: string; }
+interface Props { targetUserID: string; targetUsername?: string; }
 
-export default function FollowButton({ targetUserID }: Props) {
+export default function FollowButton({ targetUserID, targetUsername }: Props) {
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const [following, setFollowing] = useState(false);
@@ -26,8 +26,8 @@ export default function FollowButton({ targetUserID }: Props) {
     try {
       if (following) { await deleteFollow(targetUserID); setFollowing(false); }
       else { await createFollow(targetUserID); setFollowing(true); }
-      qc.invalidateQueries({ queryKey: ['user', targetUserID] });
-      if (user) qc.invalidateQueries({ queryKey: ['user', user.userID] });
+      qc.invalidateQueries({ queryKey: ['user', targetUsername ?? targetUserID] });
+      if (user) qc.invalidateQueries({ queryKey: ['user', user.username] });
     } finally { setLoading(false); }
   };
 

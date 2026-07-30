@@ -51,6 +51,32 @@ func (h *UserHandler) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(u)
 }
 
+// GetByUsernameHandler returns a user's public profile by username.
+//
+// @Summary      Get user by username
+// @Description  Returns the public profile of a user by their username, including live followers, following, and posts counts.
+// @Tags         Users
+// @Security     BearerAuth
+// @Param        username  path      string  true  "Username"
+// @Success      200       {object}  user.User
+// @Failure      404       {string}  string  "User not found"
+// @Failure      500       {string}  string  "Internal server error"
+// @Router       /users/by-username/{username} [get]
+func (h *UserHandler) GetByUsernameHandler(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	u, err := h.store.GetByUsername(r.Context(), username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(u)
+}
+
 func (h *UserHandler) UserRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/{userID}", h.GetByIDHandler)

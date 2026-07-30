@@ -27,7 +27,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/feed" element={<FeedPage />} />
             <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/profile/:userID" element={<ProfilePage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/feed" replace />} />

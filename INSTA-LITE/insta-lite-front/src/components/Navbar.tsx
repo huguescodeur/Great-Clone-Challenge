@@ -88,13 +88,13 @@ export default function Navbar() {
             {user ? (
               <div className="relative">
                 <button onClick={() => setShowMenu((v) => !v)} className="p-1 cursor-pointer">
-                  <div className={`rounded-full overflow-hidden ${at(`/profile/${user.userID}`) ? 'ring-2 ring-black ring-offset-1' : ''}`}>
+                  <div className={`rounded-full overflow-hidden ${at(`/profile/${user.username}`) ? 'ring-2 ring-black ring-offset-1' : ''}`}>
                     <Avatar name={user.fullName || user.username} url={user.profilePicURL} size="xs" />
                   </div>
                 </button>
                 {showMenu && (
                   <div className="absolute right-0 top-10 bg-white border border-[#dbdbdb] rounded-lg shadow-lg z-50 w-52 py-1 overflow-hidden">
-                    <Link to={`/profile/${user.userID}`} className="flex items-center gap-3 px-4 py-3 text-sm text-[#262626] hover:bg-[#fafafa]" onClick={() => setShowMenu(false)}>
+                    <Link to={`/profile/${user.username}`} className="flex items-center gap-3 px-4 py-3 text-sm text-[#262626] hover:bg-[#fafafa]" onClick={() => setShowMenu(false)}>
                       <Avatar name={user.fullName || user.username} url={user.profilePicURL} size="xs" />
                       <span className="font-semibold">{user.username}</span>
                     </Link>

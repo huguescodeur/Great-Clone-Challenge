@@ -98,7 +98,7 @@ export default function PostCard({ post }: Props) {
     <article className="bg-white border border-[#dbdbdb] mb-4">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5">
-        <Link to={`/profile/${post.userID}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+        <Link to={`/profile/${post.username}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <Avatar name={userName} size="sm" ring />
           <span className="text-sm font-semibold text-[#262626]">{userName}</span>
         </Link>
@@ -177,7 +177,7 @@ export default function PostCard({ post }: Props) {
           </div>
         ) : (
           <p className="text-sm text-[#262626] mb-1.5">
-            <Link to={`/profile/${post.userID}`} className="font-semibold mr-1.5 hover:opacity-70">{userName}</Link>
+            <Link to={`/profile/${post.username}`} className="font-semibold mr-1.5 hover:opacity-70">{userName}</Link>
             {displayContent}
           </p>
         )}

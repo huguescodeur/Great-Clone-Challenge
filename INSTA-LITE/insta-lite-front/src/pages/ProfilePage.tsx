@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { getPostsByUser } from '../api/posts';
 import { getFollowers, getFollowing } from '../api/follow';
-import { getUserByID } from '../api/users';
+import { getUserByUsername } from '../api/users';
 import Avatar from '../components/Avatar';
 import FollowButton from '../components/FollowButton';
 import PostCard from '../components/PostCard';
@@ -12,7 +12,7 @@ import { useAuthStore } from '../store/auth';
 import type { Follow, PostResponse } from '../types';
 
 export default function ProfilePage() {
-  const { userID } = useParams<{ userID: string }>();
+  const { username } = useParams<{ username: string }>();
   const { user: me } = useAuthStore();
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -20,33 +20,34 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<'posts' | 'followers' | 'following'>('posts');
   const { ref, inView } = useInView({ threshold: 0.1 });
 
-  const isMe = me?.userID === userID;
+  const isMe = me?.username === username;
 
-  const { data: fetchedUser } = useQuery({
-    queryKey: ['user', userID],
-    queryFn: () => getUserByID(userID!),
-    enabled: !!userID,
+  const { data: profileUser } = useQuery({
+    queryKey: ['user', username],
+    queryFn: () => getUserByUsername(username!),
+    enabled: !!username,
     staleTime: 30_000,
+    placeholderData: isMe ? (me as typeof profileUser) : undefined,
   });
 
-  const profileUser = fetchedUser ?? (isMe ? me : null);
+  const profileUserID = profileUser?.userID;
 
   const { data: postsData, isFetching } = useQuery({
-    queryKey: ['user-posts', userID, cursor],
-    queryFn: () => getPostsByUser(userID!, cursor),
-    enabled: !!userID && tab === 'posts',
+    queryKey: ['user-posts', profileUserID, cursor],
+    queryFn: () => getPostsByUser(profileUserID!, cursor),
+    enabled: !!profileUserID && tab === 'posts',
   });
 
   const { data: followersData } = useQuery({
-    queryKey: ['followers', userID],
-    queryFn: () => getFollowers(userID!),
-    enabled: !!userID && tab === 'followers',
+    queryKey: ['followers', profileUserID],
+    queryFn: () => getFollowers(profileUserID!),
+    enabled: !!profileUserID && tab === 'followers',
   });
 
   const { data: followingData } = useQuery({
-    queryKey: ['following', userID],
-    queryFn: () => getFollowing(userID!),
-    enabled: !!userID && tab === 'following',
+    queryKey: ['following', profileUserID],
+    queryFn: () => getFollowing(profileUserID!),
+    enabled: !!profileUserID && tab === 'following',
   });
 
   useEffect(() => {
@@ -65,11 +66,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     setPosts([]); setCursor(undefined); setHasMore(true);
-  }, [userID]);
+  }, [username]);
 
-  if (!userID) return null;
+  if (!username) return null;
 
-  const displayName = profileUser?.username || userID.slice(0, 12);
+  const displayName = profileUser?.username || username;
 
   return (
     <div>
@@ -80,7 +81,7 @@ export default function ProfilePage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <h1 className="text-xl font-light text-[#262626]">{displayName}</h1>
-              {!isMe && <FollowButton targetUserID={userID} />}
+              {!isMe && profileUserID && <FollowButton targetUserID={profileUserID} targetUsername={username} />}
               {isMe && (
                 <button className="px-4 py-1.5 border border-[#dbdbdb] rounded-lg text-sm font-semibold text-[#262626] hover:bg-[#fafafa] cursor-pointer">
                   Modifier le profil

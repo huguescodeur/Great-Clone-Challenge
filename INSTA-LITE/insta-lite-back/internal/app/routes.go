@@ -72,6 +72,7 @@ func (a *App) Routes() chi.Router {
 				})
 
 				r.Get("/users/{userID}", a.UserHandler.GetByIDHandler)
+				r.Get("/users/by-username/{username}", a.UserHandler.GetByUsernameHandler)
 				r.Mount("/notifications", a.NotificationHandler.NotificationRoutes())
 				r.Mount("/feed", a.FeedHandler.FeedRoutes())
 				r.Mount("/posts", a.PostHandler.PostRoutes())

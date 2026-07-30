@@ -240,7 +240,8 @@ All protected routes require `Authorization: Bearer <token>`.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/users/{userID}` | Yes | Get user profile with live counts |
+| GET | `/users/{userID}` | Yes | Get user profile by UUID with live counts |
+| GET | `/users/by-username/{username}` | Yes | Get user profile by username with live counts |
 
 ### Posts
 

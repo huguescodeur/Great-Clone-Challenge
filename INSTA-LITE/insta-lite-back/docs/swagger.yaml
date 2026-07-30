@@ -1378,6 +1378,34 @@ paths:
       summary: Abonnements d'un utilisateur
       tags:
       - Follow
+  /users/by-username/{username}:
+    get:
+      description: Returns the public profile of a user by their username, including
+        live followers, following, and posts counts.
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "404":
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get user by username
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     description: 'Entrez le token JWT avec le préfixe "Bearer ". Exemple: "Bearer
