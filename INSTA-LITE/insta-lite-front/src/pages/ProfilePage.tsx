@@ -9,7 +9,7 @@ import Avatar from '../components/Avatar';
 import FollowButton from '../components/FollowButton';
 import PostCard from '../components/PostCard';
 import { useAuthStore } from '../store/auth';
-import type { Follow, PostResponse } from '../types';
+import type { Follow, PostResponse, User } from '../types';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -27,7 +27,7 @@ export default function ProfilePage() {
     queryFn: () => getUserByUsername(username!),
     enabled: !!username,
     staleTime: 30_000,
-    placeholderData: isMe ? (me as typeof profileUser) : undefined,
+    placeholderData: isMe ? (me as User) : undefined,
   });
 
   const profileUserID = profileUser?.userID;
