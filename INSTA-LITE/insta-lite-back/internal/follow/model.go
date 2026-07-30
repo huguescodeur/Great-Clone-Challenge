@@ -23,8 +23,10 @@ func (s FollowStatus) IsValid() bool {
 }
 
 type Follow struct {
-	FollowerID uuid.UUID    `json:"followerId"`
-	FolloweeID uuid.UUID    `json:"followeeId"`
-	Status     FollowStatus `json:"status"`
-	CreatedAt  time.Time    `json:"createdAt"`
+	FollowerID       uuid.UUID    `json:"followerId"`
+	FolloweeID       uuid.UUID    `json:"followeeId"`
+	FollowerUsername string       `json:"followerUsername,omitempty"`
+	FolloweeUsername string       `json:"followeeUsername,omitempty"`
+	Status           FollowStatus `json:"status"`
+	CreatedAt        time.Time    `json:"createdAt"`
 }

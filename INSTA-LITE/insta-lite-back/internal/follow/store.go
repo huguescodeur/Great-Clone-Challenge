@@ -95,10 +95,11 @@ func (s *store) GetFollowers(ctx context.Context, followeeID uuid.UUID, limit, o
 	}
 
 	q := `
-		SELECT follower_id, followee_id, status, created_at
-		FROM followers
-		WHERE followee_id = $1 AND status = 'accepted'
-		ORDER BY created_at DESC
+		SELECT f.follower_id, f.followee_id, u.username, f.status, f.created_at
+		FROM followers f
+		JOIN users u ON u.user_id = f.follower_id
+		WHERE f.followee_id = $1 AND f.status = 'accepted'
+		ORDER BY f.created_at DESC
 		LIMIT $2 OFFSET $3
 		`
 
@@ -111,7 +112,7 @@ func (s *store) GetFollowers(ctx context.Context, followeeID uuid.UUID, limit, o
 	followers := make([]*Follow, 0)
 	for rows.Next() {
 		f := Follow{}
-		if err := rows.Scan(&f.FollowerID, &f.FolloweeID, &f.Status, &f.CreatedAt); err != nil {
+		if err := rows.Scan(&f.FollowerID, &f.FolloweeID, &f.FollowerUsername, &f.Status, &f.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		followers = append(followers, &f)
@@ -133,10 +134,11 @@ func (s *store) GetFollowing(ctx context.Context, followerID uuid.UUID, limit, o
 	}
 
 	q := `
-		SELECT follower_id, followee_id, status, created_at
-		FROM followers
-		WHERE follower_id = $1 AND status = 'accepted'
-		ORDER BY created_at DESC
+		SELECT f.follower_id, f.followee_id, u.username, f.status, f.created_at
+		FROM followers f
+		JOIN users u ON u.user_id = f.followee_id
+		WHERE f.follower_id = $1 AND f.status = 'accepted'
+		ORDER BY f.created_at DESC
 		LIMIT $2 OFFSET $3
 		`
 
@@ -149,7 +151,7 @@ func (s *store) GetFollowing(ctx context.Context, followerID uuid.UUID, limit, o
 	following := make([]*Follow, 0)
 	for rows.Next() {
 		f := Follow{}
-		if err := rows.Scan(&f.FollowerID, &f.FolloweeID, &f.Status, &f.CreatedAt); err != nil {
+		if err := rows.Scan(&f.FollowerID, &f.FolloweeID, &f.FolloweeUsername, &f.Status, &f.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		following = append(following, &f)

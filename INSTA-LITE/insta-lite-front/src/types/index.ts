@@ -81,6 +81,8 @@ export type FollowStatus = 'pending' | 'accepted';
 export interface Follow {
   followerId: string;
   followeeId: string;
+  followerUsername?: string;
+  followeeUsername?: string;
   status: FollowStatus;
   createdAt: string;
 }

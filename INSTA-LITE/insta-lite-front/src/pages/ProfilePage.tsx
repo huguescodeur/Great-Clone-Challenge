@@ -169,7 +169,7 @@ export default function ProfilePage() {
             <p className="text-center text-[#8e8e8e] py-10 text-sm">Aucun abonné</p>
           )}
           {(followersData?.followers ?? []).map((f, i, arr) => (
-            <FollowRow key={f.followerId + i} follow={f} displayID={f.followerId} isLast={i === arr.length - 1} />
+            <FollowRow key={f.followerId + i} follow={f} userID={f.followerId} username={f.followerUsername} isLast={i === arr.length - 1} />
           ))}
         </div>
       )}
@@ -186,7 +186,7 @@ export default function ProfilePage() {
             <p className="text-center text-[#8e8e8e] py-10 text-sm">Aucun abonnement</p>
           )}
           {(followingData?.following ?? []).map((f, i, arr) => (
-            <FollowRow key={f.followeeId + i} follow={f} displayID={f.followeeId} isLast={i === arr.length - 1} />
+            <FollowRow key={f.followeeId + i} follow={f} userID={f.followeeId} username={f.followeeUsername} isLast={i === arr.length - 1} />
           ))}
         </div>
       )}
@@ -194,17 +194,18 @@ export default function ProfilePage() {
   );
 }
 
-function FollowRow({ follow, displayID, isLast }: { follow: Follow; displayID: string; isLast: boolean }) {
+function FollowRow({ follow, userID, username, isLast }: { follow: Follow; userID: string; username?: string; isLast: boolean }) {
+  const display = username ?? userID.slice(0, 12);
   return (
     <div className={`flex items-center gap-3 px-4 py-3 ${!isLast ? 'border-b border-[#dbdbdb]' : ''}`}>
-      <Avatar name={displayID} size="md" />
+      <Avatar name={display} size="md" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#262626] truncate">{displayID.slice(0, 12)}</p>
+        <p className="text-sm font-semibold text-[#262626] truncate">{display}</p>
         <p className="text-xs text-[#8e8e8e]">
           {follow.status === 'accepted' ? 'Abonné(e)' : 'En attente'}
         </p>
       </div>
-      <FollowButton targetUserID={displayID} />
+      <FollowButton targetUserID={userID} targetUsername={username} />
     </div>
   );
 }
